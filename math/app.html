@@ -597,9 +597,46 @@ html[data-theme="dark"] .anim-code .cl.on{background:#3a1c1a; color:#ffb4ab}
 /* 学习进度 */
 .run-pct{font-variant-numeric:tabular-nums; color:var(--ink2); font-weight:600}
 
+/* 堆排序树形节点 */
+.viz-svg .hn circle{fill:#e8ecf3; stroke:#b9c2cf; stroke-width:1.4}
+.viz-svg .hn.cmp circle{fill:#f1c40f; stroke:#b8900a}
+.viz-svg .hn.cur circle{fill:#ffd6d1; stroke:#d0342c; stroke-width:2.4}
+.viz-svg .hn.done circle{fill:#c9ecd9; stroke:#4f9c74}
+.viz-svg .hn text{font-size:10px; font-weight:700; fill:#39414e}
+.viz-svg .hn text.ix{font-size:7px; fill:#98a1b0; font-weight:400}
+
+/* 动画区域固定高度，避免内容变化导致整页缩放 */
+.anim-box{height:min(720px,90vh)}
+.anim-body{min-height:0; overflow:hidden}
+.anim-viz{display:flex; flex-direction:column; min-height:0; overflow:hidden}
+#animViz{flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; overflow:auto}
+#animViz .viz-array{width:100%}
+#animViz .viz-svg{width:100%; max-height:100%}
+.anim-note{flex:0 0 auto; min-height:3.6em; max-height:3.6em; overflow:auto; margin-top:12px}
+.anim-code{min-height:0; overflow:auto}
+@media (max-width:820px){
+  .anim-box{height:94vh}
+  #animViz{min-height:180px}
+  .anim-note{min-height:3.2em; max-height:3.2em; font-size:12px}
+}
+
+/* 云同步面板 */
+.cloud-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0 12px}
+.cloud-grid label{display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--muted)}
+.cloud-grid label.wide{grid-column:1 / -1}
+.cloud-grid input{
+  border:1px solid var(--line); background:var(--panel2); color:var(--ink);
+  border-radius:8px; padding:7px 9px; font-size:12.5px; outline:none;
+}
+.cloud-grid input:focus{border-color:var(--accent)}
+.cloud-status{font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.7; min-height:1.6em}
+.cloud-status.ok{color:#0f7a4f}
+.cloud-status.err{color:var(--accent)}
+@media (max-width:620px){.cloud-grid{grid-template-columns:1fr}}
+
 </style>
-<link rel="preload" href="../assets/mathjax.js?v=1793715276" as="script">
-<link rel="preload" href="../assets/app.js?v=1793715276" as="script">
+<link rel="preload" href="../assets/mathjax.js?v=1793717197" as="script">
+<link rel="preload" href="../assets/app.js?v=1793717197" as="script">
 </head>
 <body>
 <div id="app">
@@ -748,6 +785,28 @@ html[data-theme="dark"] .anim-code .cl.on{background:#3a1c1a; color:#ffb4ab}
           <p class="muted">这些是卡组里最常见的串联关系，点击任一条可跳到对应卡片。</p>
           <div id="chains" class="chains"></div>
         </div>
+        <div class="panel" id="cloudPanel">
+          <h3>云同步（GitHub）</h3>
+          <p class="muted" style="font-size:12px;line-height:1.7;margin-top:0">
+            开启后每次学习/导入自动把记录写到 GitHub 仓库的独立分支，实现手机、电脑多端同步。
+            Token 只保存在本机浏览器，请使用仅限该仓库 <b>Contents: Read and write</b> 的 fine-grained token；
+            同步文件会写进仓库（公开仓库意味着学习记录可见），建议为同步单独建一个私有仓库。
+          </p>
+          <div class="cloud-grid">
+            <label>仓库<input id="cloudRepo" placeholder="用户名/仓库名"></label>
+            <label>分支<input id="cloudBranch" placeholder="sync-data"></label>
+            <label>文件路径<input id="cloudPath" placeholder="sync/study-records.json"></label>
+            <label>设备名称<input id="cloudDevice" placeholder="如 iPhone / MacBook"></label>
+            <label class="wide">Token<input id="cloudToken" type="password" placeholder="github_pat_...（仅本机保存）"></label>
+          </div>
+          <div class="done-actions" style="justify-content:flex-start">
+            <button class="btn primary" id="cloudSave">保存并同步</button>
+            <button class="btn" id="cloudPull">立即同步</button>
+            <button class="btn danger" id="cloudOff">关闭同步</button>
+          </div>
+          <div id="cloudStatus" class="cloud-status">未开启</div>
+        </div>
+
         <div class="panel">
           <h3>数据</h3>
           <p class="muted">学习记录保存在本机浏览器（localStorage），不会上传。</p>
@@ -798,12 +857,12 @@ window.MathJax = {
   startup: { typeset: false }
 };
 </script>
-<script async src="../assets/mathjax.js?v=1793715276"></script>
+<script async src="../assets/mathjax.js?v=1793717197"></script>
 
 
 <script>
-window.__KM_ANIM_SRC__ = "../assets/anim.js?v=1793715276";
+window.__KM_ANIM_SRC__ = "../assets/anim.js?v=1793717197";
 </script>
-<script src="../assets/app.js?v=1793715276"></script>
+<script src="../assets/app.js?v=1793717197"></script>
 </body>
 </html>

@@ -86,6 +86,8 @@
     const r = state.srs[id] || (state.srs[id] = { due: now, ivl: 0, ease: 2.5, reps: 0, lapses: 0, last: 0 });
     r.reps = (r.reps || 0) + 1;
     r.last = now;
+    r.updatedAt = now;
+    r.device = cloud.deviceName || '';
     if (how === 'again') {
       r.lapses = (r.lapses || 0) + 1;
       r.ease = Math.max(1.3, (r.ease || 2.5) - 0.2);
@@ -107,6 +109,7 @@
     save();
     paintSideProgress();
     renderTree();
+    scheduleSync();
   }
 
   function deckStats(subject) {
@@ -489,9 +492,9 @@
       const st = deckStats(d.name);
       const el = document.createElement('button');
       el.className = 'pick-card';
-      const pct = st.total ? Math.round((st.done / st.total) * 100) : 0;
+      const pct = st.total ? Math.round((st.rev / st.total) * 100) : 0;
       el.innerHTML = '<div class="pk-t">' + esc(d.name) + '</div>' +
-        '<div class="pk-c">到期 ' + st.due + ' · 新卡 ' + st.new + ' · 已掌握 ' + st.done + '/' + st.total + '</div>' +
+        '<div class="pk-c">到期 ' + st.due + ' · 新卡 ' + st.new + ' · 已学 ' + st.rev + '/' + st.total + '</div>' +
         '<div class="pk-n"><span>' + pct + '%</span><span class="mini-bar"><i style="width:' + pct + '%"></i></span></div>';
       el.onclick = () => startStudy(d.name, 'all', 0);
       box.appendChild(el);
@@ -776,6 +779,7 @@
     }
     flushSave();
     closeImport();
+    scheduleSync();
     renderTree();
     renderStats();
     paintSideProgress();
@@ -796,6 +800,233 @@
     el.classList.add('on');
     clearTimeout(el._t);
     el._t = setTimeout(() => el.classList.remove('on'), 2200);
+  }
+
+
+  /* ------------------------------------------------ 云同步（GitHub） */
+  const CLOUD_KEY = 'kaoyan-cloud-v1';
+  const DEVICE_KEY = 'kaoyan-device-v1';
+  const DEFAULT_PATH = 'sync/study-records.json';
+
+  function loadCloud() {
+    try {
+      const c = JSON.parse(localStorage.getItem(CLOUD_KEY) || '{}');
+      return Object.assign({
+        enabled: false, repo: '', branch: 'sync-data', path: DEFAULT_PATH,
+        token: '', deviceId: '', deviceName: '',
+      }, c);
+    } catch (e) {
+      return { enabled: false, repo: '', branch: 'sync-data', path: DEFAULT_PATH, token: '', deviceId: '', deviceName: '' };
+    }
+  }
+  let cloud = loadCloud();
+  function saveCloud() {
+    try { localStorage.setItem(CLOUD_KEY, JSON.stringify(cloud)); } catch (e) {}
+  }
+  function ensureDevice() {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(DEVICE_KEY) || 'null'); } catch (e) {}
+    if (!d || !d.id) {
+      const id = Math.random().toString(36).slice(2, 10);
+      const plat = (navigator.platform || '设备');
+      d = { id: id, name: plat + ' · ' + id.slice(0, 4) };
+      try { localStorage.setItem(DEVICE_KEY, JSON.stringify(d)); } catch (e) {}
+    }
+    cloud.deviceId = cloud.deviceId || d.id;
+    cloud.deviceName = cloud.deviceName || d.name;
+    if (!cloud.repo) {
+      const h = location.hostname;
+      if (/\.github\.io$/.test(h)) {
+        const owner = h.split('.')[0];
+        const seg = location.pathname.split('/').filter(Boolean)[0];
+        if (owner && seg) cloud.repo = owner + '/' + seg;
+      }
+      if (!cloud.repo) cloud.repo = 'JessonXu/kaoyan-cards';
+    }
+  }
+
+  function cloudStatus(text, cls) {
+    const el = document.getElementById('cloudStatus');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'cloud-status' + (cls ? ' ' + cls : '');
+  }
+
+  function b64enc(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    bytes.forEach((b) => { bin += String.fromCharCode(b); });
+    return btoa(bin);
+  }
+  function b64dec(b64) {
+    const bin = atob(String(b64).replace(/\s/g, ''));
+    const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  }
+
+  async function gh(method, path, body) {
+    const headers = {
+      'Authorization': 'Bearer ' + cloud.token,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    };
+    if (body) headers['Content-Type'] = 'application/json';
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    let res;
+    try {
+      res = await fetch('https://api.github.com' + path, {
+        method: method, headers: headers, body: body ? JSON.stringify(body) : undefined,
+        signal: ctrl.signal,
+      });
+    } catch (e) {
+      throw new Error(e.name === 'AbortError' ? '网络超时（15 秒）' : e.message);
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!res.ok) {
+      let msg = '';
+      try { msg = (await res.json()).message || ''; } catch (e) {}
+      const err = new Error(res.status + (msg ? ' ' + msg : ''));
+      err.status = res.status;
+      throw err;
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  async function ensureBranch() {
+    try {
+      await gh('GET', '/repos/' + cloud.repo + '/git/ref/heads/' + cloud.branch);
+      return;
+    } catch (e) {
+      if (e.status !== 404) throw e;
+    }
+    let base = 'main';
+    try { await gh('GET', '/repos/' + cloud.repo + '/git/ref/heads/main'); }
+    catch (e) { base = 'master'; }
+    const b = await gh('GET', '/repos/' + cloud.repo + '/git/ref/heads/' + base);
+    await gh('POST', '/repos/' + cloud.repo + '/git/refs', {
+      ref: 'refs/heads/' + cloud.branch, sha: b.object.sha,
+    });
+  }
+
+  async function readCloud() {
+    try {
+      const f = await gh('GET', '/repos/' + cloud.repo + '/contents/' + cloud.path +
+        '?ref=' + encodeURIComponent(cloud.branch));
+      return { sha: f.sha, data: JSON.parse(b64dec(f.content)) };
+    } catch (e) {
+      if (e.status === 404) return { sha: null, data: null };
+      throw e;
+    }
+  }
+
+  function writeCloud(data, sha) {
+    const body = {
+      message: 'sync: ' + cloud.deviceName + ' @ ' + new Date().toISOString(),
+      content: b64enc(JSON.stringify(data, null, 2)),
+      branch: cloud.branch,
+    };
+    if (sha) body.sha = sha;
+    return gh('PUT', '/repos/' + cloud.repo + '/contents/' + cloud.path, body);
+  }
+
+  function mergeCloud(remote) {
+    if (!remote || !remote.records) return 0;
+    let n = 0;
+    Object.keys(remote.records).forEach((id) => {
+      if (!byId.has(id)) return;
+      const r = remote.records[id];
+      const l = state.srs[id];
+      const rt = r.updatedAt || r.last || 0;
+      const lt = l ? (l.updatedAt || l.last || 0) : -1;
+      if (rt > lt) { state.srs[id] = r; n++; }
+    });
+    return n;
+  }
+
+  function buildCloud(prev) {
+    const records = {};
+    Object.keys(state.srs).forEach((id) => {
+      const r = state.srs[id];
+      records[id] = {
+        due: r.due, ivl: r.ivl || 0, ease: r.ease || 2.5,
+        reps: r.reps || 0, lapses: r.lapses || 0, last: r.last || 0,
+        updatedAt: r.updatedAt || r.last || 0,
+        device: r.device || cloud.deviceName,
+      };
+    });
+    const devices = Object.assign({}, (prev && prev.devices) || {});
+    devices[cloud.deviceId || 'local'] = { name: cloud.deviceName, lastSync: Date.now() };
+    const updates = ((prev && prev.updates) || []).slice(-29);
+    updates.push({ device: cloud.deviceName, at: Date.now(), cards: Object.keys(records).length });
+    return { version: 1, updatedAt: Date.now(), devices: devices, records: records, updates: updates };
+  }
+
+  let cloudTimer = null;
+  function scheduleSync() {
+    if (!cloud.enabled || !cloud.token) return;
+    clearTimeout(cloudTimer);
+    cloudTimer = setTimeout(() => syncNow(), 1600);
+  }
+
+  async function syncNow() {
+    if (!cloud.enabled) { cloudStatus('未开启', ''); return; }
+    if (!cloud.token || !cloud.repo) { cloudStatus('请先填写仓库与 Token', 'err'); return; }
+    cloudStatus('同步中…', '');
+    try {
+      await ensureBranch();
+      let rem = await readCloud();
+      const merged = mergeCloud(rem.data);
+      let out = buildCloud(rem.data);
+      try {
+        await writeCloud(out, rem.sha);
+      } catch (e) {
+        if (e.status !== 409) throw e;
+        rem = await readCloud();
+        mergeCloud(rem.data);
+        out = buildCloud(rem.data);
+        await writeCloud(out, rem.sha);
+      }
+      save();
+      renderTree();
+      paintSideProgress();
+      if (cur.id && cur.view === 'browse') selectCard(cur.id, false);
+      const t = new Date();
+      cloudStatus('已同步 ' + t.toLocaleTimeString() + ' · 设备 ' + cloud.deviceName +
+        (merged ? ' · 合并 ' + merged + ' 条云端记录' : ''), 'ok');
+    } catch (e) {
+      cloudStatus('同步失败：' + e.message, 'err');
+    }
+  }
+
+  function renderCloudUI() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+    set('cloudRepo', cloud.repo);
+    set('cloudBranch', cloud.branch);
+    set('cloudPath', cloud.path);
+    set('cloudDevice', cloud.deviceName);
+    set('cloudToken', cloud.token);
+    cloudStatus(cloud.enabled ? '已开启 · ' + (cloud.repo || '未填仓库') : '未开启', cloud.enabled ? 'ok' : '');
+  }
+
+  function bindCloud() {
+    const read = () => {
+      cloud.repo = (document.getElementById('cloudRepo').value || '').trim();
+      cloud.branch = (document.getElementById('cloudBranch').value || 'sync-data').trim();
+      cloud.path = (document.getElementById('cloudPath').value || DEFAULT_PATH).trim();
+      cloud.deviceName = (document.getElementById('cloudDevice').value || '').trim() || cloud.deviceName;
+      const t = document.getElementById('cloudToken').value || '';
+      if (t) cloud.token = t.trim();
+    };
+    const saveBtn = document.getElementById('cloudSave');
+    if (!saveBtn) return;
+    saveBtn.onclick = () => { read(); cloud.enabled = true; saveCloud(); syncNow(); };
+    document.getElementById('cloudPull').onclick = () => { read(); saveCloud(); syncNow(); };
+    document.getElementById('cloudOff').onclick = () => {
+      cloud.enabled = false; saveCloud(); cloudStatus('已关闭（本机记录仍保留）', '');
+    };
   }
 
   /* ------------------------------------------------ 算法动画 */
@@ -974,7 +1205,7 @@
       if (e.key === 'Enter') { const f = searchPool(cur.q)[0]; if (f) { selectCard(f.id, false); e.target.blur(); } }
     });
     $('#showBtn').onclick = reveal;
-    $('#runExit').onclick = () => { study.running = false; showView('browse'); };
+    $('#runExit').onclick = () => { study.running = false; showView('study'); };
     $('#studyCard').onclick = () => { if (!study.revealed) reveal(); };
     $$('#rateBar .rate').forEach((b) => { b.onclick = () => grade(b.dataset.rate); });
     $('#doneAgain').onclick = () => startStudy('all', 'new', 20);
@@ -1013,6 +1244,7 @@
 
   /* ------------------------------------------------ 启动 */
   function boot() {
+    ensureDevice();
     const globalTheme = readGlobalTheme();
     state.theme = globalTheme || state.theme || 'light';
     document.documentElement.dataset.theme = state.theme;
@@ -1043,6 +1275,9 @@
     if (cur.subject === 'all' && cur.id && byId.has(cur.id)) cur.subject = byId.get(cur.id).subject;
     renderTree();
     bind();
+    bindCloud();
+    renderCloudUI();
+    if (cloud.enabled && cloud.token) setTimeout(() => syncNow(), 1500);
     showView(cur.view);
     if (cur.id && byId.has(cur.id) && cur.view !== 'study') selectCard(cur.id, false);
     paintSideProgress();

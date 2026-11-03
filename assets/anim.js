@@ -284,35 +284,36 @@
     ],
     build() {
       const a = BASE.slice(), s = [], n = a.length;
+      const hv = (extra) => Object.assign({ kind: 'heap', arr: a.slice() }, extra || {});
       function sift(i, end, phase) {
         while (2 * i + 1 < end) {
           let c = 2 * i + 1;
-          step(s, 10, '结点 ' + i + ' 的左孩子是 ' + c, snap(a, { heapEnd: end, active: [i], comparing: [c] }));
+          step(s, 10, '结点 ' + i + ' 的左孩子是 ' + c, hv({ heapEnd: end, active: [i], comparing: [c] }));
           if (c + 1 < end && a[c + 1] > a[c]) {
             c++;
-            step(s, 11, '右孩子更大，选右孩子 ' + c, snap(a, { heapEnd: end, active: [i], comparing: [c] }));
+            step(s, 11, '右孩子更大，选右孩子 ' + c, hv({ heapEnd: end, active: [i], comparing: [c] }));
           }
           if (a[i] >= a[c]) {
-            step(s, 12, '父结点不小于孩子，下沉结束', snap(a, { heapEnd: end, active: [i] }));
+            step(s, 12, '父结点不小于孩子，下沉结束', hv({ heapEnd: end, active: [i] }));
             break;
           }
           swap(a, i, c);
-          step(s, 13, '交换父子结点，继续向下调整', snap(a, { heapEnd: end, active: [c] }));
+          step(s, 13, '交换父子结点，继续向下调整', hv({ heapEnd: end, active: [c] }));
           i = c;
         }
       }
-      step(s, 1, '从最后一个非叶结点开始建堆', snap(a, { phase: 'build' }));
+      step(s, 1, '从最后一个非叶结点开始建堆', hv({ phase: 'build' }));
       for (let i = (n >> 1) - 1; i >= 0; i--) {
-        step(s, 2, '对结点 ' + i + ' 下沉，构造大根堆', snap(a, { active: [i], phase: 'build' }));
+        step(s, 2, '对结点 ' + i + ' 下沉，构造大根堆', hv({ active: [i], phase: 'build' }));
         sift(i, n, 'build');
       }
-      step(s, 3, '大根堆建成，堆顶是最大值', snap(a, { root: true }));
+      step(s, 3, '大根堆建成，堆顶是最大值', hv({ root: true }));
       for (let end = n - 1; end > 0; end--) {
         swap(a, 0, end);
-        step(s, 4, '堆顶与末尾交换，最大值 ' + a[end] + ' 归位', snap(a, { sortedTo: end, heapEnd: end }));
+        step(s, 4, '堆顶与末尾交换，最大值 ' + a[end] + ' 归位', hv({ sortedTo: end, heapEnd: end }));
         sift(0, end, 'sort');
       }
-      step(s, 7, '排序完成：' + a.join(' '), snap(a, { sortedTo: 0 }));
+      step(s, 7, '排序完成：' + a.join(' '), hv({ sortedTo: 0 }));
       return s;
     }
   };
@@ -741,6 +742,40 @@
       (v.stack && v.stack.length ? '<div class="viz-queue">栈/队列：' + v.stack.join(' ') + '</div>' : '');
   }
 
+  function renderHeap(v) {
+    const arr = v.arr || [];
+    const n = arr.length;
+    const W = 340, H = 210;
+    const pos = [];
+    for (let i = 0; i < n; i++) {
+      const depth = Math.floor(Math.log2(i + 1));
+      const first = Math.pow(2, depth) - 1;
+      const offset = i - first;
+      const count = Math.pow(2, depth);
+      const gap = W / (count + 1);
+      pos[i] = { x: gap * (offset + 1), y: 28 + depth * 56 };
+    }
+    let edges = '';
+    for (let i = 1; i < n; i++) {
+      const p = Math.floor((i - 1) / 2);
+      edges += '<line x1="' + pos[p].x + '" y1="' + pos[p].y + '" x2="' + pos[i].x + '" y2="' + pos[i].y + '" />';
+    }
+    let nodes = '';
+    for (let i = 0; i < n; i++) {
+      let cls = 'hn';
+      if ((v.comparing || []).includes(i)) cls += ' cmp';
+      if ((v.active || []).includes(i)) cls += ' cur';
+      if (v.sortedTo !== undefined && i >= v.sortedTo) cls += ' done';
+      nodes += '<g class="' + cls + '"><circle cx="' + pos[i].x + '" cy="' + pos[i].y + '" r="15" />' +
+        '<text x="' + pos[i].x + '" y="' + (pos[i].y + 4) + '">' + arr[i] + '</text>' +
+        '<text class="ix" x="' + pos[i].x + '" y="' + (pos[i].y + 26) + '">' + i + '</text></g>';
+    }
+    const legend = (v.sortedTo !== undefined ? '已归位 ' + (n - v.sortedTo) + ' 个 · ' : '') +
+      '大根堆：父结点 ≥ 孩子';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="viz-svg">' + edges + nodes + '</svg>' +
+      '<div class="viz-queue">' + legend + '</div>';
+  }
+
   function renderGraph(v) {
     const W = 340, H = 200;
     const pos = {};
@@ -774,6 +809,7 @@
     if (v.kind === 'string') return renderString(v);
     if (v.kind === 'tree') return renderTree(v);
     if (v.kind === 'graph') return renderGraph(v);
+    if (v.kind === 'heap') return renderHeap(v);
     return '';
   }
 
