@@ -81,13 +81,25 @@
   const isGraduated = (id) => { const r = rec(id); return !!r && r.ivl >= 1; };
   const mastered = (id) => { const r = rec(id); return !!r && (r.ivl >= 4 || r.reps >= 3); };
 
-  function markStudied(id) {
+  function rate(id, how) {
     const now = Date.now();
     const r = state.srs[id] || (state.srs[id] = { due: now, ivl: 0, ease: 2.5, reps: 0, lapses: 0, last: 0 });
     r.reps = (r.reps || 0) + 1;
     r.last = now;
-    r.ivl = Math.min(30, Math.max(1, (r.ivl || 0) * 2));
-    r.due = now + r.ivl * DAY;
+    if (how === 'again') {
+      r.lapses = (r.lapses || 0) + 1;
+      r.ease = Math.max(1.3, (r.ease || 2.5) - 0.2);
+      r.ivl = 0;
+      r.due = now + 4 * 60 * 1000;
+    } else if (how === 'hard') {
+      r.ease = Math.max(1.3, (r.ease || 2.5) - 0.05);
+      r.ivl = r.ivl >= 1 ? Math.max(1, Math.round(r.ivl * 1.15)) : 0;
+      r.due = r.ivl >= 1 ? now + r.ivl * DAY : now + 30 * 60 * 1000;
+    } else {
+      r.ease = Math.min(3.2, (r.ease || 2.5) + 0.05);
+      r.ivl = r.ivl >= 1 ? Math.max(2, Math.round(r.ivl * (r.ease || 2.5))) : 1;
+      r.due = now + r.ivl * DAY;
+    }
     state.reviews = (state.reviews || 0) + 1;
     const k = today();
     state.daily[k] = (state.daily[k] || 0) + 1;
@@ -446,6 +458,25 @@
     paintRun(true);
   }
 
+  function startRandom(subject, count) {
+    let pool = subject === 'all' ? cards.slice() : subjectCards(subject);
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    }
+    pool = pool.slice(0, count || 20);
+    study.subject = subject;
+    study.queue = pool;
+    study.idx = 0;
+    study.revealed = false;
+    study.running = true;
+    study.label = '随机 · ' + (subject === 'all' ? '全部 408' : subject);
+    showView('study');
+    updateCrumb();
+    if (!pool.length) { renderDone(); return; }
+    paintRun(true);
+  }
+
   function renderPick() {
     $('#studyPick').classList.remove('hidden');
     $('#studyRun').classList.add('hidden');
@@ -467,6 +498,21 @@
     });
     $('#pickAll').onclick = () => startStudy('all', 'all', 30);
     $('#pickNew').onclick = () => startStudy('all', 'new', 30);
+
+    const rb = $('#randomBar');
+    if (rb) {
+      rb.innerHTML = '';
+      D.decks.forEach((d) => {
+        const b = document.createElement('button');
+        b.textContent = '随机 · ' + d.name;
+        b.onclick = () => startRandom(d.name, 20);
+        rb.appendChild(b);
+      });
+      const all = document.createElement('button');
+      all.textContent = '随机 · 全部 ' + (D.group && D.group.id === '408' ? '408' : '数学') + '（20 张）';
+      all.onclick = () => startRandom('all', 20);
+      rb.appendChild(all);
+    }
   }
 
   function paintRun(initial) {
@@ -478,9 +524,11 @@
     $('#studyCard').classList.remove('hidden');
     const total = study.queue.length;
     const done = study.idx;
-    $('#runBar').style.width = Math.round((done / total) * 100) + '%';
+    const pct = Math.round((done / total) * 100);
+    $('#runBar').style.width = pct + '%';
     $('#runLabel').textContent = study.label;
     $('#runCount').textContent = (done + 1) + ' / ' + total;
+    $('#runPct').textContent = '已完成 ' + pct + '%';
     const sb = statusBadge(c.id);
     let sBody = c.back;
     let sExtra = '';
@@ -500,10 +548,8 @@
       (c.app ? '<div class="app"><b>应用 / 提醒：</b>' + c.app + '</div>' : '') +
       (c.link ? '<div class="link">🔗 ' + esc(c.link) + '</div>' : '') +
       sExtra + '</div>';
-    $('#showBar').classList.toggle('hidden', false);
-    const btn = $('#showBtn');
-    btn.textContent = study.revealed ? '下一张 →  ' : '显示答案';
-    btn.classList.toggle('next', study.revealed);
+    $('#showBar').classList.toggle('hidden', study.revealed);
+    $('#rateBar').classList.toggle('hidden', !study.revealed);
     typeset($('#studyCard'));
     if (initial) $('#studyCard').focus();
   }
@@ -512,11 +558,17 @@
     if (!study.running || study.revealed) return;
     study.revealed = true;
     $('#studyAnswer').classList.remove('hidden');
-    $('#showBtn').textContent = '下一张 →  ';
-    $('#showBtn').classList.add('next');
-    const c = study.queue[study.idx];
-    if (c) markStudied(c.id);
+    $('#showBar').classList.add('hidden');
+    $('#rateBar').classList.remove('hidden');
     typeset($('#studyAnswer'));
+  }
+
+  function grade(how) {
+    if (!study.running || !study.revealed) return;
+    const c = study.queue[study.idx];
+    if (!c) return;
+    rate(c.id, how);
+    advance();
   }
 
   function advance() {
@@ -529,6 +581,7 @@
   function renderDone() {
     $('#studyCard').classList.add('hidden');
     $('#showBar').classList.add('hidden');
+    $('#rateBar').classList.add('hidden');
     $('#doneBox').classList.remove('hidden');
     $('#doneTitle').textContent = study.queue.length ? '这一轮学完了 🎉' : '暂时没有到期的卡片';
     $('#doneSub').textContent = study.queue.length
@@ -849,12 +902,12 @@
     if (cur.view === 'study') {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
-        if (study.revealed) advance(); else reveal();
+        if (!study.revealed) reveal();
         return;
       }
-      if (e.key === 'ArrowRight') {
+      if (study.revealed && ['a', 'A', 's', 'S', 'd', 'D'].includes(e.key)) {
         e.preventDefault();
-        if (study.revealed) advance(); else reveal();
+        grade({ a: 'again', s: 'hard', d: 'good' }[e.key.toLowerCase()]);
         return;
       }
       if (e.key === 'Escape') {
@@ -923,6 +976,7 @@
     $('#showBtn').onclick = reveal;
     $('#runExit').onclick = () => { study.running = false; showView('browse'); };
     $('#studyCard').onclick = () => { if (!study.revealed) reveal(); };
+    $$('#rateBar .rate').forEach((b) => { b.onclick = () => grade(b.dataset.rate); });
     $('#doneAgain').onclick = () => startStudy('all', 'new', 20);
     $('#donePick').onclick = () => { study.running = false; renderPick(); };
     $('#exportBtn').onclick = downloadExport;

@@ -80,13 +80,47 @@ git push -u origin main
 - **动画未加载完时，点「算法动画」无反应**（入口显示为半透明加载态），加载完成后自动恢复；
 - 更新时缓存参数会变，浏览器会拉取新文件；未变的部分走缓存。
 
-## 七、本次新增（部署前请重新上传）
+## 七、手动上传（GitHub API，推荐）
+
+本目录已带一个上传脚本，不依赖 git，绕开 `HTTP2 framing layer` 这类网络问题。
+
+**1. 创建 Token**
+
+GitHub → 右上头像 → Settings → Developer settings → Personal access tokens →
+**Fine-grained tokens** → Generate new token：
+
+- Repository access：Only select repositories → `JessonXu/kaoyan-cards`
+- Permissions → Repository permissions → **Contents: Read and write**
+- 生成后复制 token（只显示一次）
+
+**2. 运行上传**
+
+双击 `手动上传.command`（或在终端执行）：
+
+```bash
+cd "考研知识点梳理/部署-静态网站"
+python3 GitHubAPI上传.py
+```
+
+按提示粘贴 token（输入不显示），脚本会：
+
+1. 读取当前目录全部文件（自动跳过 `.DS_Store` 和脚本自身）；
+2. 逐个创建 blob → 生成 tree → 提交 commit → 更新 `main`；
+3. 输出 commit 链接。
+
+**3. 等待生效**
+
+1–2 分钟后强刷 `https://jessonxu.github.io/kaoyan-cards/`。
+
+> Token 只用于本次请求，不会写入任何文件；用完可在 GitHub 设置中撤销。
+
+## 八、本次新增（部署前请重新上传）
 
 - **公式与代码标准化**：408 卡片中的 `O(n)`、`log₂n`、`⌊x⌋`、`2^n`、`a/b` 等已统一转为 LaTeX（MathJax 排版），代码用等宽代码块；
 - **卡片状态徽标**：右上角显示 **新卡（蓝）/ 到期（红）/ 已排期（灰）**，列表左侧用同色圆点提示；
 - **搜索兼容公式**：可直接搜 `O(n)`、`log2n` 等。
 
-## 八、更新内容
+## 九、更新内容
 
 改完 `考研知识点梳理/部署-静态网站/` 后重新执行：
 
@@ -98,7 +132,7 @@ git push
 
 Pages 会自动重新构建（1–2 分钟）。若页面没变，强制刷新（Mac：`Cmd+Shift+R`；手机：清缓存或换隐私窗口）。
 
-## 九、常见问题
+## 十、常见问题
 
 **1）404 / 页面空白**
 - 确认 `index.html` 在仓库根目录，而不是在某个子文件夹里；
@@ -119,7 +153,7 @@ Pages 会自动重新构建（1–2 分钟）。若页面没变，强制刷新�
 **5）仓库大小限制**
 - Pages 站点建议 < 1 GB，单文件 < 100 MB；本目录约 8.6 MB，完全够用。
 
-## 十、稳定性说明（重要）
+## 十一、稳定性说明（重要）
 
 **GitHub Pages 能保证稳定吗？不能“保证”。**
 

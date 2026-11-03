@@ -585,9 +585,21 @@ html[data-theme="dark"] .anim-code .cl.on{background:#3a1c1a; color:#ffb4ab}
   padding:0 4px; margin:0 2px; vertical-align:2px; font-weight:700; cursor:help;
 }
 
+/* 随机学习入口 */
+.random-wrap{margin:6px 0 18px}
+.random-title{font-size:11px; letter-spacing:1.2px; color:var(--muted); margin-bottom:7px}
+.random-bar{display:flex; flex-wrap:wrap; gap:7px}
+.random-bar button{
+  border:1px solid var(--line); background:var(--panel); border-radius:999px; padding:5px 12px;
+  font-size:12px; color:var(--ink2);
+}
+.random-bar button:hover{border-color:var(--accent); color:var(--accent)}
+/* 学习进度 */
+.run-pct{font-variant-numeric:tabular-nums; color:var(--ink2); font-weight:600}
+
 </style>
-<link rel="preload" href="../assets/mathjax.js?v=1793713731" as="script">
-<link rel="preload" href="../assets/app.js?v=1793713731" as="script">
+<link rel="preload" href="../assets/mathjax.js?v=1793715276" as="script">
+<link rel="preload" href="../assets/app.js?v=1793715276" as="script">
 </head>
 <body>
 <div id="app">
@@ -682,13 +694,17 @@ html[data-theme="dark"] .anim-code .cl.on{background:#3a1c1a; color:#ffb4ab}
           <button class="btn" id="pickAll">全部卡组 · 今日到期</button>
           <button class="btn" id="pickNew">只学新卡</button>
         </div>
+        <div class="random-wrap">
+          <div class="random-title">随机学习 · 20 张</div>
+          <div id="randomBar" class="random-bar"></div>
+        </div>
         <div id="studyDeckList" class="pick-grid"></div>
       </div>
 
       <div id="studyRun" class="run hidden">
         <div class="run-head">
-          <div class="run-progress"><div id="runBar"></div></div>
-          <div class="run-meta"><span id="runLabel"></span><span id="runCount"></span>
+          <div class="run-progress"><i id="runBar"></i></div>
+          <div class="run-meta"><span id="runLabel"></span><span id="runPct" class="run-pct"></span><span id="runCount"></span>
             <button class="run-exit" id="runExit">结束本轮</button></div>
         </div>
         <div class="stage">
@@ -696,6 +712,11 @@ html[data-theme="dark"] .anim-code .cl.on{background:#3a1c1a; color:#ffb4ab}
         </div>
         <div id="showBar" class="showbar">
           <button class="btn primary" id="showBtn">显示答案 <kbd>Space</kbd></button>
+        </div>
+        <div id="rateBar" class="rate hidden">
+          <button class="rate again" data-rate="again"><b>A</b> 忘记 <span>重新学</span></button>
+          <button class="rate hard" data-rate="hard"><b>S</b> 模糊 <span>很快再见</span></button>
+          <button class="rate good" data-rate="good"><b>D</b> 掌握 <span>按计划复习</span></button>
         </div>
         <div id="doneBox" class="done hidden">
           <div class="empty-ic">🎉</div>
@@ -777,12 +798,12 @@ window.MathJax = {
   startup: { typeset: false }
 };
 </script>
-<script async src="../assets/mathjax.js?v=1793713731"></script>
+<script async src="../assets/mathjax.js?v=1793715276"></script>
 
 
 <script>
-window.__KM_ANIM_SRC__ = "../assets/anim.js?v=1793713731";
+window.__KM_ANIM_SRC__ = "../assets/anim.js?v=1793715276";
 </script>
-<script src="../assets/app.js?v=1793713731"></script>
+<script src="../assets/app.js?v=1793715276"></script>
 </body>
 </html>
