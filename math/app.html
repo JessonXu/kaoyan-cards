@@ -634,9 +634,19 @@ html[data-theme="dark"] .anim-code .cl.on{background:#3a1c1a; color:#ffb4ab}
 .cloud-status.err{color:var(--accent)}
 @media (max-width:620px){.cloud-grid{grid-template-columns:1fr}}
 
+/* 代码高亮与行内代码换行 */
+.code-box .cl code{font:inherit; color:inherit; background:none; border:0; padding:0; white-space:pre-wrap}
+.a code{white-space:normal; word-break:break-word}
+.kw{color:#7a3fb5; font-weight:600}
+.num{color:#b35900}
+.cm{color:#7c8a7f; font-style:italic}
+html[data-theme="dark"] .kw{color:#c9a6ff}
+html[data-theme="dark"] .num{color:#f0b25e}
+html[data-theme="dark"] .cm{color:#8fa694}
+
 </style>
-<link rel="preload" href="../assets/mathjax.js?v=1793717197" as="script">
-<link rel="preload" href="../assets/app.js?v=1793717197" as="script">
+<link rel="preload" href="../assets/mathjax.js?v=1793778321" as="script">
+<link rel="preload" href="../assets/app.js?v=1793778321" as="script">
 </head>
 <body>
 <div id="app">
@@ -857,12 +867,12 @@ window.MathJax = {
   startup: { typeset: false }
 };
 </script>
-<script async src="../assets/mathjax.js?v=1793717197"></script>
+<script async src="../assets/mathjax.js?v=1793778321"></script>
 
 
 <script>
-window.__KM_ANIM_SRC__ = "../assets/anim.js?v=1793717197";
+window.__KM_ANIM_SRC__ = "../assets/anim.js?v=1793778321";
 </script>
-<script src="../assets/app.js?v=1793717197"></script>
+<script src="../assets/app.js?v=1793778321"></script>
 </body>
 </html>

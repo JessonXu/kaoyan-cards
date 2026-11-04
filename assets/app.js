@@ -367,20 +367,59 @@
     return t.value;
   }
 
-  function splitCodes(html) {
+  function extractCodes(html) {
     const codes = [];
-    const out = String(html).replace(/<code>([\s\S]*?)<\/code>/g, (m, inner) => {
-      const text = decodeEnt(inner).trim();
-      codes.push(text);
-      return '<sup class="code-ref" title="见下方代码区">[' + codes.length + ']</sup>';
+    String(html).replace(/<code>([\s\S]*?)<\/code>/g, (m, inner) => {
+      const t = decodeEnt(inner.replace(/<br\s*\/?>/gi, '\n')).trim();
+      if (t && codes.indexOf(t) < 0) codes.push(t);
+      return m;
     });
-    return { html: out, codes: codes };
+    return codes;
+  }
+
+  function formatCodeLines(text) {
+    const out = [];
+    let cur = '', paren = 0;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '(') paren++;
+      if (ch === ')') paren = Math.max(0, paren - 1);
+      if (ch === '{') {
+        cur += '{';
+        if (cur.trim()) out.push(cur.trim());
+        cur = '';
+      } else if (ch === '}') {
+        if (cur.trim()) out.push(cur.trim());
+        out.push('}');
+        cur = '';
+      } else if (ch === ';' && paren === 0) {
+        cur += ';';
+        if (cur.trim()) out.push(cur.trim());
+        cur = '';
+      } else {
+        cur += ch;
+      }
+    }
+    if (cur.trim()) out.push(cur.trim());
+    return out;
+  }
+
+  function hl(line) {
+    let h = esc(line);
+    const parts = h.split('//');
+    let code = parts.shift();
+    code = code.replace(/\b(void|int|bool|char|for|while|if|else|return|struct|typedef|NULL|true|false|swap|break|continue)\b/g,
+      '<span class="kw">$1</span>');
+    code = code.replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+    return code + (parts.length ? '<span class="cm">//' + parts.join('//') + '</span>' : '');
   }
 
   function codeAreaHTML(codes) {
-    return '<div class="code-box"><div class="code-head"><span>代码区</span>' +
-      '<span class="code-tip">文中 [n] 对应下方第 n 段</span></div><pre class="code">' +
-      codes.map((c, i) => '<span class="cl"><span class="ln">' + (i + 1) + '</span>' + esc(c) + '</span>').join('') +
+    const lines = [];
+    codes.forEach((c) => { formatCodeLines(c).forEach((l) => lines.push(l)); });
+    return '<div class="code-box"><div class="code-head"><span>代码</span>' +
+      '<span class="code-tip">逐行显示 · 等宽格式</span></div><pre class="code">' +
+      lines.map((l, i) => '<span class="cl"><span class="ln">' + (i + 1) + '</span><code>' + hl(l) + '</code></span>').join('') +
       '</pre></div>';
   }
 
@@ -390,7 +429,7 @@
     return '<div class="code-box"><div class="code-head"><span>算法代码</span>' +
       '<span class="code-tip">点右下角「动画演示」逐行播放</span></div>' +
       '<pre class="code">' + lines.map((l, i) =>
-        '<span class="cl"><span class="ln">' + (i + 1) + '</span>' + esc(l) + '</span>').join('') + '</pre></div>';
+        '<span class="cl"><span class="ln">' + (i + 1) + '</span><code>' + hl(l) + '</code></span>').join('') + '</pre></div>';
   }
 
   function cardHTML(c, opt) {
@@ -398,13 +437,7 @@
     const r = rec(c.id);
     const sb = statusBadge(c.id);
     const types = [...new Set(cards.map((x) => x.type))];
-    let body = c.back;
-    let extraCode = '';
-    if (!c.anim) {
-      const sp = splitCodes(c.back);
-      body = sp.html;
-      if (sp.codes.length) extraCode = codeAreaHTML(sp.codes);
-    }
+    const body = c.back;
     const typeChips = opt.showTypeFilter
       ? '<div class="typechips"><button class="chip' + (cur.type ? '' : ' on') + '" data-type="">全部</button>' + types
           .map((t) => '<button class="chip' + (cur.type === t ? ' on' : '') + '" data-type="' + t + '">' + t + '</button>')
@@ -422,8 +455,6 @@
       '<div class="a">' + body + '</div>' +
       (c.app ? '<div class="app"><b>应用 / 提醒：</b>' + c.app + '</div>' : '') +
       (c.link ? '<div class="link">🔗 ' + esc(c.link) + '</div>' : '') +
-      extraCode +
-      (c.anim ? codeBox(c.anim) : '') +
       (typeChips ? '<div class="tags">' + typeChips + '</div>' : '') +
       (c.anim ? '<div class="card-actions"><button class="anim-btn" data-anim="' + c.anim + '">▶ 动画演示</button></div>' : '');
   }
@@ -533,13 +564,7 @@
     $('#runCount').textContent = (done + 1) + ' / ' + total;
     $('#runPct').textContent = '已完成 ' + pct + '%';
     const sb = statusBadge(c.id);
-    let sBody = c.back;
-    let sExtra = '';
-    if (!c.anim) {
-      const sp = splitCodes(c.back);
-      sBody = sp.html;
-      if (sp.codes.length) sExtra = codeAreaHTML(sp.codes);
-    }
+    const sBody = c.back;
     $('#studyCard').innerHTML =
       '<div class="meta"><span class="tag ' + c.type + '">' + c.type + '</span>' +
       '<span class="chapter">' + esc(c.deck) + '</span>' +
@@ -550,7 +575,7 @@
       '<hr class="sep"><div class="a">' + sBody + '</div>' +
       (c.app ? '<div class="app"><b>应用 / 提醒：</b>' + c.app + '</div>' : '') +
       (c.link ? '<div class="link">🔗 ' + esc(c.link) + '</div>' : '') +
-      sExtra + '</div>';
+      '</div>';
     $('#showBar').classList.toggle('hidden', study.revealed);
     $('#rateBar').classList.toggle('hidden', !study.revealed);
     typeset($('#studyCard'));
@@ -1283,6 +1308,11 @@
     paintSideProgress();
   }
 
+  window.addEventListener('hashchange', () => {
+    readHash();
+    if (cur.id && byId.has(cur.id)) selectCard(cur.id, false);
+    else showView(cur.view);
+  });
   window.addEventListener('pagehide', flushSave);
   window.addEventListener('beforeunload', flushSave);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
