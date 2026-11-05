@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "updatedAt": 1793865013112,
+  "updatedAt": 1793865079547,
   "devices": {
     "ip4w7tv8": {
       "name": "MacIntel · ip4w",
-      "lastSync": 1793865013112
+      "lastSync": 1793865079547
     }
   },
   "records": {
@@ -89,13 +89,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0009": {
-      "due": 1793802706110,
-      "ivl": 0,
-      "ease": 2.45,
-      "reps": 1,
+      "due": 1793951429241,
+      "ivl": 1,
+      "ease": 2.5,
+      "reps": 2,
       "lapses": 0,
-      "last": 1793800906110,
-      "updatedAt": 1793800906110,
+      "last": 1793865029241,
+      "updatedAt": 1793865029241,
       "device": "MacIntel · ip4w"
     },
     "c0010": {
@@ -109,13 +109,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0011": {
-      "due": 1793802823402,
-      "ivl": 0,
-      "ease": 2.45,
-      "reps": 1,
+      "due": 1793951476723,
+      "ivl": 1,
+      "ease": 2.5,
+      "reps": 2,
       "lapses": 0,
-      "last": 1793801023402,
-      "updatedAt": 1793801023402,
+      "last": 1793865076723,
+      "updatedAt": 1793865076723,
       "device": "MacIntel · ip4w"
     },
     "c0012": {
@@ -689,13 +689,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0071": {
-      "due": 1793802762372,
-      "ivl": 1,
-      "ease": 2.55,
-      "reps": 1,
+      "due": 1794124242458,
+      "ivl": 3,
+      "ease": 2.5999999999999996,
+      "reps": 2,
       "lapses": 0,
-      "last": 1793716362372,
-      "updatedAt": 1793716362372,
+      "last": 1793865042458,
+      "updatedAt": 1793865042458,
       "device": "MacIntel · ip4w"
     },
     "c0296": {
@@ -1002,11 +1002,6 @@
   "updates": [
     {
       "device": "MacIntel · ip4w",
-      "at": 1793800570696,
-      "cards": 5
-    },
-    {
-      "device": "MacIntel · ip4w",
       "at": 1793800693953,
       "cards": 6
     },
@@ -1148,6 +1143,11 @@
     {
       "device": "MacIntel · ip4w",
       "at": 1793865013112,
+      "cards": 99
+    },
+    {
+      "device": "MacIntel · ip4w",
+      "at": 1793865079547,
       "cards": 99
     }
   ]
