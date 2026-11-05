@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "updatedAt": 1793865210883,
+  "updatedAt": 1793865286490,
   "devices": {
     "ip4w7tv8": {
       "name": "MacIntel · ip4w",
-      "lastSync": 1793865210883
+      "lastSync": 1793865286490
     }
   },
   "records": {
@@ -719,13 +719,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0248": {
-      "due": 1793803566461,
+      "due": 1793867024134,
       "ivl": 0,
-      "ease": 2.25,
-      "reps": 2,
+      "ease": 2.2,
+      "reps": 3,
       "lapses": 1,
-      "last": 1793801766461,
-      "updatedAt": 1793801766461,
+      "last": 1793865224134,
+      "updatedAt": 1793865224134,
       "device": "MacIntel · ip4w"
     },
     "c0400": {
@@ -779,13 +779,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0406": {
-      "due": 1793803669128,
-      "ivl": 0,
-      "ease": 2.4000000000000004,
-      "reps": 2,
+      "due": 1793951683801,
+      "ivl": 1,
+      "ease": 2.45,
+      "reps": 3,
       "lapses": 0,
-      "last": 1793801869128,
-      "updatedAt": 1793801869128,
+      "last": 1793865283801,
+      "updatedAt": 1793865283801,
       "device": "MacIntel · ip4w"
     },
     "c0267": {
@@ -839,13 +839,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0359": {
-      "due": 1793803571150,
-      "ivl": 0,
-      "ease": 2.25,
-      "reps": 2,
+      "due": 1793951628291,
+      "ivl": 1,
+      "ease": 2.3,
+      "reps": 3,
       "lapses": 1,
-      "last": 1793801771150,
-      "updatedAt": 1793801771150,
+      "last": 1793865228291,
+      "updatedAt": 1793865228291,
       "device": "MacIntel · ip4w"
     },
     "c0201": {
@@ -1002,11 +1002,6 @@
   "updates": [
     {
       "device": "MacIntel · ip4w",
-      "at": 1793800909231,
-      "cards": 10
-    },
-    {
-      "device": "MacIntel · ip4w",
       "at": 1793801026463,
       "cards": 12
     },
@@ -1148,6 +1143,11 @@
     {
       "device": "MacIntel · ip4w",
       "at": 1793865210883,
+      "cards": 99
+    },
+    {
+      "device": "MacIntel · ip4w",
+      "at": 1793865286490,
       "cards": 99
     }
   ]
