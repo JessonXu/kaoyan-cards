@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "updatedAt": 1794225071862,
+  "updatedAt": 1794225133077,
   "devices": {
     "ip4w7tv8": {
       "name": "MacIntel · ip4w",
-      "lastSync": 1794225071862
+      "lastSync": 1794225133077
     }
   },
   "records": {
@@ -449,13 +449,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0274": {
-      "due": 1793863717763,
-      "ivl": 1,
-      "ease": 2.5,
-      "reps": 2,
+      "due": 1794484284055,
+      "ivl": 3,
+      "ease": 2.55,
+      "reps": 3,
       "lapses": 0,
-      "last": 1793777317763,
-      "updatedAt": 1793777317763,
+      "last": 1794225084055,
+      "updatedAt": 1794225084055,
       "device": "MacIntel · ip4w"
     },
     "c0275": {
@@ -479,13 +479,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0277": {
-      "due": 1793864047274,
-      "ivl": 1,
-      "ease": 2.5,
-      "reps": 2,
+      "due": 1794484288720,
+      "ivl": 3,
+      "ease": 2.55,
+      "reps": 3,
       "lapses": 0,
-      "last": 1793777647274,
-      "updatedAt": 1793777647274,
+      "last": 1794225088720,
+      "updatedAt": 1794225088720,
       "device": "MacIntel · ip4w"
     },
     "c0278": {
@@ -529,13 +529,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0416": {
-      "due": 1793864269080,
-      "ivl": 1,
-      "ease": 2.5,
-      "reps": 2,
+      "due": 1794484314020,
+      "ivl": 3,
+      "ease": 2.55,
+      "reps": 3,
       "lapses": 0,
-      "last": 1793777869080,
-      "updatedAt": 1793777869080,
+      "last": 1794225114020,
+      "updatedAt": 1794225114020,
       "device": "MacIntel · ip4w"
     },
     "c0426": {
@@ -549,13 +549,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0470": {
-      "due": 1793864282947,
-      "ivl": 1,
-      "ease": 2.5,
-      "reps": 2,
+      "due": 1794484330670,
+      "ivl": 3,
+      "ease": 2.55,
+      "reps": 3,
       "lapses": 0,
-      "last": 1793777882947,
-      "updatedAt": 1793777882947,
+      "last": 1794225130670,
+      "updatedAt": 1794225130670,
       "device": "MacIntel · ip4w"
     },
     "c0457": {
@@ -579,13 +579,13 @@
       "device": "MacIntel · ip4w"
     },
     "c0449": {
-      "due": 1793864143835,
-      "ivl": 1,
-      "ease": 2.3499999999999996,
-      "reps": 2,
+      "due": 1794397902654,
+      "ivl": 2,
+      "ease": 2.3999999999999995,
+      "reps": 3,
       "lapses": 1,
-      "last": 1793777743835,
-      "updatedAt": 1793777743835,
+      "last": 1794225102654,
+      "updatedAt": 1794225102654,
       "device": "MacIntel · ip4w"
     },
     "c0373": {
@@ -1302,11 +1302,6 @@
   "updates": [
     {
       "device": "MacIntel · ip4w",
-      "at": 1793802120836,
-      "cards": 88
-    },
-    {
-      "device": "MacIntel · ip4w",
       "at": 1793802191399,
       "cards": 88
     },
@@ -1448,6 +1443,11 @@
     {
       "device": "MacIntel · ip4w",
       "at": 1794225071862,
+      "cards": 129
+    },
+    {
+      "device": "MacIntel · ip4w",
+      "at": 1794225133077,
       "cards": 129
     }
   ]
